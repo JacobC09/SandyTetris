@@ -1,0 +1,28 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+        {
+            "type": "cmake",
+            "label": "CMake: build",
+            "command": "build",
+            "targets": [
+                "all"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake template build task"
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "echo '==== Running ===='; ./build/game.exe; echo '==== Finished ====';",
+            "dependsOn": [
+                "CMake: build"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
