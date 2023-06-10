@@ -17,6 +17,13 @@ struct Timer {
     void reset() {timer = 0;}
 };
 
+struct Animation {
+    int timer;
+    bool active;
+
+    void reset() {timer = 0;}
+};
+
 // UI Constants
 const int screenWidth = 880;
 const int screenHeight = 640;
@@ -34,6 +41,15 @@ struct ShapeData {
     int color;
     int style;
     int rotation;
+};
+
+struct Position {
+    int x;
+    int y;
+};
+
+struct ConnectionAnim : Animation {
+    std::vector<Position> positions;
 };
 
 Rectangle GetShapeRect(ShapeData shape);
@@ -56,6 +72,8 @@ public:
     void SpawnShape();
     void CheckShapeCollision(Vector2 mouvement);
     void TurnShapeToSand();
+    void FindConnectedSand();
+    void UpdateConnectAnim();
 
     bool IsShapeColliding();
     bool IsShapeInvalid();
@@ -71,6 +89,9 @@ private:
     Image blocksImg;
     Rectangle boardRect;
     Application* app;
+
+    // Connection Animation
+    ConnectionAnim connectionAnim;
     
     // Current Shape
     ShapeData currentShape;

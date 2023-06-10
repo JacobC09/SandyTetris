@@ -10,9 +10,9 @@ struct Shape {
     std::vector<Rotation> rotations;
 };
 
-const int totalShapes = 7;
-const int totalStyles = 3;
-const int totalColors = 3;
+const int totalShapes = 8;
+const int totalStyles = 4;
+const int totalColors = 4;
 
 const Shape shapeTypes[totalShapes] = {
     // T
@@ -233,6 +233,40 @@ const Shape shapeTypes[totalShapes] = {
                     0, 1, 0, 0,
                 }
             }
+        }
+    },
+    // Jake
+    Shape {
+        size: 3,
+        rotations: {
+            Rotation {
+                bitmap: {
+                    1, 1, 1,
+                    0, 1, 0,
+                    1, 1, 0,
+                }
+            },
+            Rotation {
+                bitmap: {
+                    1, 0, 1,
+                    1, 1, 1,
+                    0, 0, 1,
+                }
+            },
+            Rotation {
+                bitmap: {
+                    0, 1, 1,
+                    0, 1, 0,
+                    1, 1, 1,
+                }
+            },
+            Rotation {
+                bitmap: {
+                    1, 0, 0,
+                    1, 1, 1,
+                    1, 0, 1,
+                }
+            },
         }
     }
 };

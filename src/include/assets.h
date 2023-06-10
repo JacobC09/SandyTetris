@@ -1,8 +1,6 @@
 #pragma once
 #include "common.h"
 
-constexpr int GLSL_VERSION = 300;
-
 // Textures
 enum class Textures {
     desertBg1,
@@ -30,9 +28,15 @@ enum class Shaders {
     Heat
 };
 
-inline std::map<Shaders, const char*> shaderPaths = {
-    {Shaders::Heat, "assets/shader/heat.fs"},
-};
+#ifdef PLATFORM_WEB
+    inline std::map<Shaders, const char*> shaderPaths = {
+        {Shaders::Heat, "assets/shader/100/heat.fs"},
+    };
+#else
+    inline std::map<Shaders, const char*> shaderPaths = {
+        {Shaders::Heat, "assets/shader/330/heat.fs"},
+    };
+#endif
 
 void LoadAssets();
 void UnloadAssets();
