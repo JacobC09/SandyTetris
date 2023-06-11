@@ -17,8 +17,8 @@ public:
     void SetValues(int _letterDistance, int _lineOffset);
 
     void Render(std::string text, Vector2 pos, float size, Color color);
-    void RenderCentered(std::string text, Vector2 pos, int size, Color color, bool centerX=false, bool centerY=false);
-    void RenderCenteredRec(Rectangle region, std::string text, int size, Color color);
+    void RenderCentered(std::string text, Vector2 pos, float size, Color color, bool centerX=false, bool centerY=false);
+    void RenderCenteredRec(Rectangle region, std::string text, float size, Color color);
     
     void RenderColored(std::vector<std::string> texts, Vector2 pos, float size, std::vector<Color> colors);
 };

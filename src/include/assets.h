@@ -5,13 +5,15 @@
 enum class Textures {
     desertBg1,
     desertBg2,
-    blocks
+    blocks,
+    font
 };
 
 inline std::map<Textures, const char*> texturePaths = {
     {Textures::desertBg1, "assets/image/desertbg1.png"},
     {Textures::desertBg2, "assets/image/desertbg2.png"},
     {Textures::blocks, "assets/image/blocks.png"},
+    {Textures::font, "assets/image/font.png"},
 };
 
 // Sounds

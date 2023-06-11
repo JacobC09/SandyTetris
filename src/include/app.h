@@ -1,108 +1,9 @@
 #pragma once
 #include "common.h"
+#include "game.h"
+#include "pixelfont.h"
 #include "transitions.h"
-#include "sand.h"
 
-// Forward Declaration
-class Application;
-
-Vector2 IndexToPos(int index, int sideLength);
-
-struct Timer {
-    int total;
-    int timer = 0;
-
-    bool done() {return timer >= total;}
-    void update() {if (++timer > total) timer = 0;}
-    void reset() {timer = 0;}
-};
-
-struct Animation {
-    int timer;
-    bool active;
-
-    void reset() {timer = 0;}
-};
-
-// UI Constants
-const int screenWidth = 880;
-const int screenHeight = 640;
-const int tileSize = 8;
-const int boardWidth = 10;
-const int boardHeight = 16;
-const float scale = 4;
-
-// Colors
-const Color darkBrown = Color {139, 28, 3, 255};
-
-// Game
-struct ShapeData {
-    int type;
-    int color;
-    int style;
-    int rotation;
-};
-
-struct Position {
-    int x;
-    int y;
-};
-
-struct ConnectionAnim : Animation {
-    std::vector<Position> positions;
-};
-
-Rectangle GetShapeRect(ShapeData shape);
-void DrawShape(ShapeData shape, Vector2 pos, float scale);
-
-class Game {
-public:
-    Game() = default;
-    Game(Application* app) : app(app) {};
-
-    void Load();
-    void NewGame();
-    void Update();
-
-    void DrawBg();
-    void DrawSandToTex();
-    void MoveShape();
-    void TryToCorrectShape();
-    void RotateShape();
-    void SpawnShape();
-    void CheckShapeCollision(Vector2 mouvement);
-    void TurnShapeToSand();
-    void FindConnectedSand();
-    void UpdateConnectAnim();
-
-    bool IsShapeColliding();
-    bool IsShapeInvalid();
-    ShapeData NewShape();
-
-private:
-    int sinceSandUpdate;
-    int bgAnimationTimer;
-    bool gameOver = false;
-    Timer bgAnimation;
-    Simulation simulation;
-    RenderTexture2D boardTex;
-    Image blocksImg;
-    Rectangle boardRect;
-    Application* app;
-
-    // Connection Animation
-    ConnectionAnim connectionAnim;
-    
-    // Current Shape
-    ShapeData currentShape;
-    Vector2 cShapePos;
-
-    // Stats
-    float shapeMoveSpeed;
-    float shapeFallSpeed;
-};
-
-// App
 class Application {
 public:
     enum States {
@@ -119,18 +20,26 @@ public:
     States state;
     Game game;
     Settings settings;
-    std::vector<Transition*> transitions;
+    PixelFont font;
+    std::map<std::string, std::unique_ptr<Transition>> transitions;
     
     Application() = default;
     
     void Load();
     void Run();
     void Unload();
-};
 
-struct SnowParticle {
-    Vector2 pos;
-    int size;
-    int speed;
-    int lifetime;
+    template<typename Transition, typename... Args>
+    void AddTransition(std::string name, Args&&... args) {
+        transitions[name] = std::make_unique<Transition>(args...);
+    }
+    
+    Transition* GetTransition(std::string name) {
+        auto pos = transitions.find(name);
+        if (pos != transitions.end()) {
+            return pos->second.get();
+        } else {
+            return nullptr;
+        }
+    }
 };

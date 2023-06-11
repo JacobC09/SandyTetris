@@ -8,10 +8,10 @@ public:
     virtual bool isFinished() = 0;
 };
 
-class BlockFadeTransition : public Transition {
+class ArrowTransition : public Transition {
 public:
-    BlockFadeTransition(Color color, float duration, int tileSize, EaseFunction easingFunction=&EaseLinearNone) 
-        : color(color), duration(duration), tileSize(tileSize), timer(0), easingFunction(easingFunction) {};
+    ArrowTransition(Color color, float duration, int arrowOffset, EaseFunction easingFunction=EaseCubicInOut) 
+        : color(color), duration(duration), arrowOffset(arrowOffset), timer(0), easingFunction(easingFunction) {};
 
     void Draw() override;
     bool isFinished() override;
@@ -19,7 +19,7 @@ public:
 private:
     Color color;
     float duration;
-    int tileSize;
     int timer;
+    int arrowOffset;
     EaseFunction easingFunction;
 };

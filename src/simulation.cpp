@@ -1,4 +1,4 @@
-#include "sand.h"
+#include "simulation.h"
 
 Simulation::Simulation(int width, int height) : width(width), height(height) {
     sandBuffer = std::unique_ptr<SandParticle[]>(new SandParticle[width * height]);

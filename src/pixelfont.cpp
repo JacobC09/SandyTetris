@@ -11,6 +11,7 @@ PixelFont::PixelFont(Texture2D text, std::string chars, int _spaceSize, Color sp
     int begin = 0;
     int current = 1;
     Image image = LoadImageFromTexture(text);
+
     while (current <= text.width && characterIndex < (signed) chars.size()) {
         bool isSplitColor = true;
         if (current < text.width) {
@@ -27,6 +28,10 @@ PixelFont::PixelFont(Texture2D text, std::string chars, int _spaceSize, Color sp
             }
         }
         current++;
+    }
+
+    if (chars.size() > letters.size()) {
+        std::cout << "[Error] Too many characters specified\n";;
     }
 }
 
@@ -52,8 +57,6 @@ void PixelFont::SetValues(int _letterDistance, int _lineOffset) {
 }
 
 void PixelFont::Render(std::string text, Vector2 pos, float size, Color color) {
-    pos = {std::floor(pos.x), std::floor(pos.y)};
-
     for (char character : text) {
         if (character == '\n') {
             pos.x = 0;
@@ -64,14 +67,14 @@ void PixelFont::Render(std::string text, Vector2 pos, float size, Color color) {
             pos.x += spaceSize * 4 * size;
         } else if (letters.find(character) != letters.end()) {
             Rectangle source = letters[character];
-            Rectangle dest = {pos.x, pos.y, source.width * size, source.height * size};
+            Rectangle dest = {std::floor(pos.x), std::floor(pos.y), std::floor(source.width * size), std::floor(source.height * size)};
             DrawTexturePro(texture, source, dest, {0, 0}, 0, color);
             pos.x += (source.width + letterDistance) * size;
         }
     }
 }
 
-void PixelFont::RenderCentered(std::string text, Vector2 pos, int size, Color color, bool centerX, bool centerY) {
+void PixelFont::RenderCentered(std::string text, Vector2 pos, float size, Color color, bool centerX, bool centerY) {
     if (centerX)
         pos.x -= (Measure(text) * size) / 2;
     if (centerY)
@@ -80,7 +83,7 @@ void PixelFont::RenderCentered(std::string text, Vector2 pos, int size, Color co
     Render(text, pos, size, color);
 }
 
-void PixelFont::RenderCenteredRec(Rectangle region, std::string text, int size, Color color) {
+void PixelFont::RenderCenteredRec(Rectangle region, std::string text, float size, Color color) {
     Render(text, {
         region.x + region.width / 2 - Measure(text) * size / 2, 
         region.y + region.height / 2 - height * size / 2 - (size - 1)

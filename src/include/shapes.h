@@ -1,6 +1,13 @@
 #pragma once
 #include <vector>
 
+struct ShapeData {
+    int type;
+    int color;
+    int style;
+    int rotation;
+};
+
 struct Rotation {
     std::vector<bool> bitmap;
 };

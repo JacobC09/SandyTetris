@@ -21,7 +21,8 @@ add_executable(game
     "src/pixelfont.cpp"
     "src/assets.cpp"
     "src/transitions.cpp"
-    "src/sand.cpp"
+    "src/simulation.cpp"
+    "src/game.cpp"
 )
 
 add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
