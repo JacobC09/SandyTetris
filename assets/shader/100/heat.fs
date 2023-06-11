@@ -2,7 +2,6 @@
 
 precision mediump float;
 
-
 varying vec2 fragTexCoord;
 varying vec4 fragColor;
 
