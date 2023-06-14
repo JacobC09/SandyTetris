@@ -1,17 +1,24 @@
-
 #pragma once
+#include "app.h"
 #include "shapes.h"
+#include "animations.h"
 #include "simulation.h"
 
 class Application;
+class Game;
+
+// UI Constants
+const int tileSize = 8;
+const int boardWidth = 10;
+const int boardHeight = 17;
+const int panelBorderThickness = 6;
+const int panelPadding = 32;
+const int panelMarginSide = 16;
+const int panelMarginTop = 12;
+const float scale = 4;
 
 Vector2 IndexToPos(int index, int sideLength);
 void DrawBorder(Rectangle rect, int thickness, Color color);
-
-struct Position {
-    int x;
-    int y;
-};
 
 struct Statistics {
     int score;
@@ -27,39 +34,6 @@ struct Timer {
     void reset() {timer = 0;}
 };
 
-struct Animation {
-    int timer = 0;
-    bool active = false;
-
-    void reset() {timer = 0;}
-};
-
-// UI Constants
-const int screenWidth = 880;
-const int screenHeight = 640;
-const int tileSize = 8;
-const int boardWidth = 10;
-const int boardHeight = 17;
-const int panelBorderThickness = 6;
-const int panelPadding = 32;
-const int panelMarginSide = 16;
-const int panelMarginTop = 12;
-const float scale = 4;
-
-// Colors
-namespace Colors {
-    const Color orange0 = Color {139, 28, 3, 255};
-    const Color orange1 = Color {181, 64, 25, 255};
-    const Color orange2 = Color {225, 110, 51, 255};
-    const Color orange3 = Color {231, 128, 54, 255};
-    const Color dim = ColorAlpha(BLACK, 0.9);
-}
-
-struct ConnectionAnim : Animation {
-    std::vector<Position> positions;
-    int highestPoint;
-};
-
 struct TextParticle : Animation {
     std::string text;
     Vector2 startPos;
@@ -71,14 +45,15 @@ struct TextParticle : Animation {
 Rectangle GetShapeRect(ShapeData shape);
 void DrawShape(ShapeData shape, Vector2 pos, float scale);
 
-class Game {
+class Game : Screen {
 public:
     Game() = default;
     Game(Application* app) : app(app) {};
 
-    void Load();
+    void Load() override;
+    void Update() override;
+    
     void NewGame();
-    void Update();
     void DrawBg();
     void DrawNextShape();
     void DrawInfoPanel();
@@ -91,18 +66,20 @@ public:
     void TurnShapeToSand();
     void FindConnectedSand();
     void UpdateConnectAnim();
+    void UpdateGameOverAnim();
     void UpdateTextParticles();
 
     bool IsShapeColliding();
     bool IsShapeInvalid();
     ShapeData NewShape();
 
+    Simulation simulation;
+
 private:
     int sinceSandUpdate;
     int bgAnimationTimer;
     bool gameOver = false;
     Timer bgAnimation;
-    Simulation simulation;
     RenderTexture2D boardTex;
     Image blocksImg;
     Rectangle boardRect;
@@ -111,7 +88,10 @@ private:
     Application* app;
 
     // Animations
+    int gameOverTimer;
     ConnectionAnim connectionAnim;
+    FallingParticleAnim gameOverParticleAnim;
+    GameOverAnim gameOverAnim;
     std::vector<TextParticle> textParticles;
     
     // Shape

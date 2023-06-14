@@ -1,7 +1,7 @@
 #include <cmath>
+#include "app.h"
 #include "game.h"
 #include "assets.h"
-#include "app.h"
 #include "debug.h"
 
 void Game::Load() {
@@ -12,15 +12,16 @@ void Game::Load() {
 }
 
 void Game::NewGame() {
-    simulation.Reset();
+    simulation.Clear();
     bgAnimation.reset();
-    sinceSandUpdate = 0;
-    shapeMoveSpeed = 2;
-    shapeFallSpeed = 1;
-    gameOver = false;
-    connectionAnim = ConnectionAnim {.positions = {}};
     textParticles.clear();
+    sinceSandUpdate = 0;
+    
+    // Game Over
+    gameOverTimer = 0;
+    gameOver = false;
 
+    // Panel Positions
     boardRect = {
         0, 0, 
         boardWidth * tileSize * scale, 
@@ -47,6 +48,9 @@ void Game::NewGame() {
     infoPanelRect.x = nextShapeRect.x;
     infoPanelRect.y = nextShapeRect.y + nextShapeRect.height + panelPadding;
 
+    // Stats
+    shapeMoveSpeed = 2;
+    shapeFallSpeed = 1;
     stats = Statistics {
         .score = 0,
         .lines = 0
@@ -54,21 +58,12 @@ void Game::NewGame() {
 
     level = 1;
 
+    // Shape
     nextShape = NewShape();
     SpawnShape();
 }
 
 void Game::Update() {
-    if (gameOver) {
-        Transition* transition = app->GetTransition("game-over-arrow");
-
-        if (transition == nullptr) {
-            app->AddTransition<ArrowTransition>("game-over-arrow", Colors::orange0, 40, 260);
-        } else if (transition->isFinished()) {
-            NewGame();
-        }
-    }
-
     if (!connectionAnim.active && !gameOver) {
         if (++sinceSandUpdate > 1) {
             simulation.Step();
@@ -79,8 +74,11 @@ void Game::Update() {
             SpawnShape();
 
         MoveShape();
-        RotateShape();
-        FindConnectedSand();
+
+        if (currentShape.type != -1) {
+            RotateShape();
+            FindConnectedSand();
+        }
     }
 
     DrawBg();
@@ -91,11 +89,15 @@ void Game::Update() {
         ClearBackground(Colors::dim);
         DrawSandToTex();
 
-        if (currentShape.type != -1)
+        if (currentShape.type != -1 && !gameOver)
             DrawShape(currentShape, {std::floor(cShapePos.x), std::floor(cShapePos.y)}, 1);
         
         if (connectionAnim.active) {
             UpdateConnectAnim();
+        }
+
+        if (gameOver) {
+            UpdateGameOverAnim();
         }
 
     EndTextureMode();
@@ -278,6 +280,7 @@ void Game::SpawnShape() {
     };
 
     if (IsShapeColliding()) {
+        TurnShapeToSand();
         gameOver = true;
     }
 }
@@ -380,7 +383,11 @@ void Game::TurnShapeToSand() {
 
         for (int x = 0; x < tileSize; x++) {
             for (int y = 0; y < tileSize; y++) {
-                simulation.SetAt(cShapePos.x + pos.x + x, cShapePos.y + pos.y + y, SandParticle {
+                Position particlePos = {(int) std::floor(cShapePos.x + pos.x + x), (int) std::floor(cShapePos.y + pos.y + y)};
+
+                if (!simulation.ValidPosition(particlePos.x, particlePos.y)) continue;
+
+                simulation.SetAt(particlePos.x, particlePos.y, SandParticle {
                     occupied: true,
                     color: GetImageColor(blocksImg, src.x + x, src.y + y),
                     type: currentShape.color
@@ -445,45 +452,20 @@ void Game::FindConnectedSand() {
         }
 
         if (connected) {
+            connectionAnim.start();
             connectionAnim.positions = visited;
-            connectionAnim.active = true;
             connectionAnim.highestPoint = simulation.height;
-            connectionAnim.reset();
         }
     }
 }
 
 void Game::UpdateConnectAnim() {
-    const int waitBeforeFade = 10;
-    const int maxFallBackDistance = 16;
+    connectionAnim.update(this);
 
-    connectionAnim.timer++;
-    bool isWhite = connectionAnim.timer % 40 < 20;
-    int x = (connectionAnim.timer - waitBeforeFade) * 2;
-
-    for (int i = connectionAnim.positions.size() - 1; i > -1; i--) {
-        Position pos = connectionAnim.positions[i];
-        
-        if (pos.y < connectionAnim.highestPoint)
-            connectionAnim.highestPoint = pos.y;
-
-        if (pos.x < x) {
-            if (GetRandomValue(0, std::max(maxFallBackDistance - (x - pos.x), 0)) == 0) {
-                connectionAnim.positions.erase(connectionAnim.positions.begin() + i);
-                simulation.SetAt(pos.x, pos.y, SandParticle{false});
-            }
-        }
-
-        if (isWhite)
-            DrawPixel(pos.x, pos.y, WHITE);
-    }
-
-    if (x > simulation.width + maxFallBackDistance) {
-        connectionAnim.active = false;
-        connectionAnim.positions.clear();
+    if (connectionAnim.isFinished()) {
         stats.lines++;
 
-        int yStart = std::max(boardRect.y + connectionAnim.highestPoint * scale - 10, boardRect.y + 150);
+        int yStart = std::max(boardRect.y + connectionAnim.highestPoint * scale + 32, boardRect.y + 150);
 
         // Spawn Text Particles
         textParticles.push_back(TextParticle {
@@ -502,6 +484,77 @@ void Game::UpdateConnectAnim() {
         });
 
         stats.score += 100;
+    }
+}
+
+void Game::UpdateGameOverAnim() {
+    const int totalDuration = 240;
+    const int startDelay = 20;
+
+    Transition* transition = app->GetTransition("game-over-arrow-reversed");
+    if (transition != nullptr && transition->isFinished()) {
+        gameOver = false;
+        gameOverParticleAnim.reset();
+        gameOverAnim.reset();
+    }
+
+    gameOverTimer++;
+
+    if (gameOverTimer < startDelay)
+        return;
+
+    if (!gameOverAnim.finished && gameOverTimer < totalDuration) {
+        if (!gameOverAnim.active) {
+            gameOverAnim.start();
+        }
+
+        gameOverAnim.update(this);
+        return;
+    }
+
+    if (gameOverParticleAnim.active) {
+        gameOverParticleAnim.update();
+    } else if (!gameOverParticleAnim.finished) {
+        gameOverParticleAnim = FallingParticleAnim {
+            .particles = {},
+            .boundingBox = Rectangle {0, 0, (float) simulation.width, (float) simulation.height},
+            .collision = true,
+        };
+
+        gameOverParticleAnim.start();
+
+        // Add the existing particles to the animation
+        for (int simY = 0; simY < simulation.height; simY++) {
+            for (int simX = 0; simX < simulation.width; simX++) {
+                SandParticle* particle = simulation.GetAt(simX, simY);
+
+                if (particle != nullptr && particle->occupied) {
+                    Vector2 vel = {GetRandomValue(-3, 3) / 10.0f, 0};
+
+                    gameOverParticleAnim.particles.push_back(FallingParticle {
+                        .pos = {(float) simX, (float) simY},
+                        .vel = vel,
+                        .color = particle->color
+                    });
+                }
+            }
+        }
+
+        simulation.Clear();
+    }
+
+    if (gameOverTimer > totalDuration) {
+        Transition* firstTransition = app->GetTransition("game-over-arrow");
+
+        if (firstTransition == nullptr) {
+            app->AddTransition<ArrowTransition>("game-over-arrow", Colors::orange0, 40, 260);
+        } else if (firstTransition->isFinished()) {
+            app->AddTransition<ReverseArrowTransition>("game-over-arrow-reversed", Colors::orange0, 40, 260);
+            NewGame();
+            gameOver = true;
+            gameOverParticleAnim.active = false;
+            gameOverParticleAnim.particles.clear();
+        }
     }
 }
 
@@ -567,6 +620,8 @@ bool Game::IsShapeInvalid() {
     return false;
 }
 
+// Utilities
+
 ShapeData Game::NewShape() {
     return ShapeData {
         .type = GetRandomValue(0, totalShapes - 1),
@@ -597,6 +652,13 @@ Rectangle GetShapeRect(ShapeData shape) {
     }
 
     return {rect.x, rect.y, rect.width - rect.x, rect.height - rect.y};
+}
+
+Vector2 IndexToPos(int index, int sideLength) {
+    return Vector2 {
+        (float) (index % sideLength), 
+        (float) std::floor(index / sideLength)
+    }; 
 }
 
 void DrawShape(ShapeData shape, Vector2 pos, float scale) {

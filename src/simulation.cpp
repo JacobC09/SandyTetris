@@ -2,7 +2,7 @@
 
 Simulation::Simulation(int width, int height) : width(width), height(height) {
     sandBuffer = std::unique_ptr<SandParticle[]>(new SandParticle[width * height]);
-    Reset();
+    Clear();
 }
 
 void Simulation::Step() {
@@ -49,7 +49,7 @@ void Simulation::SetAt(int x, int y, SandParticle value) {
     sandBuffer.get()[IndexAt(x, y)] = value;
 }
 
-void Simulation::Reset() {
+void Simulation::Clear() {
     for (int i = 0; i < width * height; i++) {
         sandBuffer.get()[i] = SandParticle{false};
     }

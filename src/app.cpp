@@ -1,13 +1,8 @@
 #include "app.h"
 #include "assets.h"
 #include "debug.h"
-
-Vector2 IndexToPos(int index, int sideLength) {
-    return Vector2 {
-        (float) (index % sideLength), 
-        (float) std::floor(index / sideLength)
-    }; 
-}
+#include "game.h"
+#include "intro.h"
 
 // Load the application
 void Application::Load() {
@@ -15,6 +10,7 @@ void Application::Load() {
     InitAudioDevice();
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     SetTargetFPS(60);
+
     LoadAssets();
 
     Shader &heatShader = GetShader(Shaders::Heat);
@@ -32,9 +28,13 @@ void Application::Load() {
 
     font = PixelFont(GetTexture(Textures::font), fontCharacters, 4, Color {255, 0, 0, 255});
 
-    game = Game(this);
-    game.Load();
-    game.NewGame();
+    game = new Game(this);
+    game->Load();
+
+    intro = new Intro(this);
+    intro->Load();
+
+    state = Application::States::Intro;
 }
 
 // Run the application
@@ -50,8 +50,11 @@ void Application::Run() {
         BeginDrawing();
             
         switch (state) {
-            case Application::States::Running:
-                game.Update();
+            case Application::States::Intro:
+                intro->Update();
+                break;
+            case Application::States::Game:
+                game->Update();
                 break;
         }
         
@@ -72,4 +75,8 @@ void Application::Run() {
 void Application::Unload() {
     UnloadAssets();
     CloseWindow();
+}
+
+void Application::StartGame() {
+    game->NewGame();
 }

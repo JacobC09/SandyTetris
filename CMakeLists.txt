@@ -15,7 +15,8 @@ set(BUILD_EXAMPLES OFF)
 
 set(PRELOAD_ASSET_DIR "assets")
 
-add_executable(game 
+add_executable(game
+    "src/include/common.h"
     "src/app.cpp"
     "src/main.cpp"
     "src/pixelfont.cpp"
@@ -23,6 +24,8 @@ add_executable(game
     "src/transitions.cpp"
     "src/simulation.cpp"
     "src/game.cpp"
+    "src/animations.cpp"
+    "src/intro.cpp"
 )
 
 add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)

@@ -23,3 +23,19 @@ private:
     int arrowOffset;
     EaseFunction easingFunction;
 };
+
+class ReverseArrowTransition : public Transition {
+public:
+    ReverseArrowTransition(Color color, float duration, int arrowOffset, EaseFunction easingFunction=EaseCubicInOut) 
+        : color(color), duration(duration), arrowOffset(arrowOffset), timer(0), easingFunction(easingFunction) {};
+
+    void Draw() override;
+    bool isFinished() override;
+
+private:
+    Color color;
+    float duration;
+    int timer;
+    int arrowOffset;
+    EaseFunction easingFunction;
+};

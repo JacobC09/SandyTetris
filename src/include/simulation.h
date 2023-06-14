@@ -17,7 +17,7 @@ public:
 
     SandParticle* GetAt(int x, int y);
     void SetAt(int x, int y, SandParticle value);
-    void Reset();
+    void Clear();
     void ResetVisited();
     int IndexAt(int x, int y);
     bool ValidPosition(int x, int y);
