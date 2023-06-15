@@ -1,5 +1,6 @@
 #include "game.h"
 #include "animations.h"
+#include "debug.h"
 
 void ConnectionAnim::update(Game* game) {
     const int waitBeforeFade = 10;
@@ -52,7 +53,6 @@ void FallingParticleAnim::update() {
         particle.pos.y += particle.vel.y;
 
         if (collision) {
-
             // If hit top
             if (particle.pos.y < boundingBox.y) {
                 particle.pos.y -= particle.pos.y;

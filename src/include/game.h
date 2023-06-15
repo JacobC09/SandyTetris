@@ -39,7 +39,11 @@ struct TextParticle : Animation {
     Vector2 startPos;
     float size;
     Color color;
-    int offset;
+    int fadeInTime;
+    int fadeOutTime;
+    int ascendDistance;
+    int descendDistance;
+    int startDelay;
 };
 
 Rectangle GetShapeRect(ShapeData shape);
@@ -78,6 +82,10 @@ public:
 private:
     int sinceSandUpdate;
     int bgAnimationTimer;
+    int gameStartDelay;
+    int gameCountDown;
+    int comboTimer;
+    int comboCount;
     bool gameOver = false;
     Timer bgAnimation;
     RenderTexture2D boardTex;

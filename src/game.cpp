@@ -16,6 +16,10 @@ void Game::NewGame() {
     bgAnimation.reset();
     textParticles.clear();
     sinceSandUpdate = 0;
+    gameStartDelay = 20;
+    gameCountDown = 0;
+    comboTimer = 0;
+    comboCount = 0;
     
     // Game Over
     gameOverTimer = 0;
@@ -61,10 +65,47 @@ void Game::NewGame() {
     // Shape
     nextShape = NewShape();
     SpawnShape();
+    nextShape = currentShape;
 }
 
 void Game::Update() {
-    if (!connectionAnim.active && !gameOver) {
+    const int totalCountDown = 3;
+    const int gameCountDownDuration = 51 * totalCountDown;
+    const Color countDownColors[totalCountDown] = {Colors::orange4, Colors::orange2, Colors::orange1};
+
+    bool paused = false;
+
+    if (gameOver)
+        paused = true;
+    
+    if (gameStartDelay) {
+        gameStartDelay--;
+        paused = true;
+    } else if (gameCountDown < gameCountDownDuration) {
+        gameCountDown++;
+        paused = true;
+
+        if (gameCountDown % (gameCountDownDuration / totalCountDown) == 1) {
+            int countDown = 3 - std::floor((float) gameCountDown/gameCountDownDuration * totalCountDown);
+
+            textParticles.push_back(TextParticle {
+                .text = "Starting in " + std::to_string(countDown),
+                .startPos = {boardRect.x + boardRect.width / 2, boardRect.y + boardRect.height / 2 - 15},
+                .size = 3,
+                .color = countDownColors[std::max(std::min(countDown - 1, totalCountDown), 0)],
+                .fadeInTime = 30,
+                .fadeOutTime = 10,
+                .ascendDistance = 50,
+                .descendDistance = 5,
+                .startDelay = 0,
+            });
+        }
+
+        if (gameCountDown == gameCountDownDuration)
+            nextShape = NewShape();
+    }
+
+    if (!connectionAnim.active && !paused) {
         if (++sinceSandUpdate > 1) {
             simulation.Step();
             sinceSandUpdate = 0;
@@ -79,6 +120,12 @@ void Game::Update() {
             RotateShape();
             FindConnectedSand();
         }
+
+        if (comboTimer) {
+            comboTimer--;
+        } else {
+            comboCount = 0;
+        }
     }
 
     DrawBg();
@@ -89,7 +136,7 @@ void Game::Update() {
         ClearBackground(Colors::dim);
         DrawSandToTex();
 
-        if (currentShape.type != -1 && !gameOver)
+        if (currentShape.type != -1 && !paused)
             DrawShape(currentShape, {std::floor(cShapePos.x), std::floor(cShapePos.y)}, 1);
         
         if (connectionAnim.active) {
@@ -464,26 +511,52 @@ void Game::UpdateConnectAnim() {
 
     if (connectionAnim.isFinished()) {
         stats.lines++;
+        comboCount++;
+        comboTimer = 120;
 
+        int score = std::pow(3, comboCount - 1) * 100;
         int yStart = std::max(boardRect.y + connectionAnim.highestPoint * scale + 32, boardRect.y + 150);
+
+        stats.score += score;
+
+        const int maxComboNames = 5;
+        const std::string comboNames[maxComboNames] {
+            "Congrats!",
+            "Double Combo",
+            "Triple Combo",
+            "Ultro Combo",
+            "Omega Holy Combo",
+        };
+        const int maxComboColors = 3;
+        const Color comboColors[maxComboColors] {
+            Colors::orange2,
+            Colors::orange4,
+            Colors::orange4,
+        };
 
         // Spawn Text Particles
         textParticles.push_back(TextParticle {
-            .text = "Congrats!",
+            .text = comboNames[std::min(comboCount, maxComboNames) - 1],
             .startPos = {boardRect.x + boardRect.width / 2, (float) yStart},
             .size = 2,
-            .color = Colors::orange2,
-            .offset = 0
+            .color = comboColors[std::min(comboCount, maxComboColors) - 1],
+            .fadeInTime = 35,
+            .fadeOutTime = 10,
+            .ascendDistance = 100,
+            .descendDistance = 10,
+            .startDelay = 0,
         });
         textParticles.push_back(TextParticle {
-            .text = "+100",
+            .text = "+" + std::to_string(score),
             .startPos = {boardRect.x + boardRect.width / 2, yStart + app->font.height * 2 + 6},
             .size = 1.8,
             .color = Colors::orange3,
-            .offset = 5
+            .fadeInTime = 38,
+            .fadeOutTime = 7,
+            .ascendDistance = 100,
+            .descendDistance = 10,
+            .startDelay = 3,
         });
-
-        stats.score += 100;
     }
 }
 
@@ -492,10 +565,13 @@ void Game::UpdateGameOverAnim() {
     const int startDelay = 20;
 
     Transition* transition = app->GetTransition("game-over-arrow-reversed");
-    if (transition != nullptr && transition->isFinished()) {
-        gameOver = false;
-        gameOverParticleAnim.reset();
-        gameOverAnim.reset();
+    if (transition != nullptr) {
+        if (transition->isFinished()) {
+            gameOver = false;
+            gameOverParticleAnim.reset();
+            gameOverAnim.reset();
+        }
+        return;
     }
 
     gameOverTimer++;
@@ -563,24 +639,25 @@ void Game::UpdateTextParticles() {
         TextParticle &textParticle = textParticles[i];
         textParticle.timer++;
 
-        int fadeInTime = 35 + textParticle.offset;
-        int fadeOutTime = std::max(15 - textParticle.offset, 0);
+        if (textParticle.timer < textParticle.startDelay)
+            continue;
 
-        int fadeInTimer = std::min(textParticle.timer, fadeInTime);
-        int fadeOutTimer = std::max(textParticle.timer - fadeInTime, 0);
+        int fadeInTimer = std::min(textParticle.timer - textParticle.startDelay, textParticle.fadeInTime);
+        int fadeOutTimer = std::max(textParticle.timer - textParticle.fadeInTime, 0);
 
-        float fadeInOpacity = std::min(EaseCubicOut(fadeInTimer, fadeInTime, 0, 1), 1.0f);
-        float fadeOutOpacity = EaseCubicIn(fadeOutTimer, fadeOutTime, 0, 0.8f);
+        float fadeInOpacity = std::min(EaseCubicOut(fadeInTimer, textParticle.fadeInTime, 0, 1), 1.0f);
+        float fadeOutOpacity = EaseCubicIn(fadeOutTimer, textParticle.fadeOutTime, 0, 0.8f);
         Color color = ColorAlpha(textParticle.color, fadeInOpacity - fadeOutOpacity);
 
         Vector2 pos = {
             textParticle.startPos.x,
-            textParticle.startPos.y - EaseCubicOut(fadeInTimer, fadeInTime, 0, 100) + EaseCubicIn(fadeOutTimer, fadeOutTime, 0, 10)
+            textParticle.startPos.y - EaseCubicOut(fadeInTimer, textParticle.fadeInTime, 0, textParticle.ascendDistance) 
+                + EaseCubicIn(fadeOutTimer, textParticle.fadeOutTime, 0, textParticle.descendDistance)
         };
 
         app->font.RenderCentered(textParticle.text, pos, textParticle.size, color, true, false);
     
-        if (textParticle.timer > fadeInTime + fadeOutTime) {
+        if (textParticle.timer > textParticle.fadeInTime + textParticle.fadeOutTime) {
             textParticles.erase(textParticles.begin() + i);
         }
     }

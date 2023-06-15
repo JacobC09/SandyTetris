@@ -15,6 +15,7 @@ namespace Colors {
     const Color orange1 = Color {181, 64, 25, 255};
     const Color orange2 = Color {225, 110, 51, 255};
     const Color orange3 = Color {231, 128, 54, 255};
+    const Color orange4 = Color {250, 136, 65, 255};
     const Color dim = ColorAlpha(BLACK, 0.9);
 }
 
@@ -32,7 +33,7 @@ public:
     };
 
     struct Settings {
-        bool music = false;
+        bool music = true;
     };
 
     Game* game;
@@ -45,8 +46,6 @@ public:
     void Load();
     void Run();
     void Unload();
-
-    void StartGame();
     
     template<typename Transition, typename... Args>
     void AddTransition(std::string name, Args&&... args) {

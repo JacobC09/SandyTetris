@@ -1,6 +1,7 @@
 #include "intro.h"
 #include "assets.h"
 #include "debug.h"
+#include "game.h"
 
 const std::string text = "Made by Jake";
 const std::vector<std::string> coloredText = {"Made by ", "Jake"};
@@ -96,6 +97,6 @@ void Intro::UpdateTransitions() {
     } else if (first->isFinished()) {
         app->AddTransition<ReverseArrowTransition>("intro-arrow-reversed", Colors::orange0, 40, 260);
         app->state = Application::States::Game;
-        // Add game start delay and change the other one to look like this and add count down and level diap[ly gaof rgame as well as a level system that adds new color and add green color and other colors if you want ikd but just do whatever the fk u want]
+        app->game->NewGame();
     }
 }

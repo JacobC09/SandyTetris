@@ -76,7 +76,3 @@ void Application::Unload() {
     UnloadAssets();
     CloseWindow();
 }
-
-void Application::StartGame() {
-    game->NewGame();
-}
