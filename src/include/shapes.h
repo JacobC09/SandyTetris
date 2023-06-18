@@ -18,8 +18,8 @@ struct Shape {
 };
 
 const int totalShapes = 8;
-const int totalStyles = 4;
-const int totalColors = 4;
+const int totalStyles = 5;
+const int totalColors = 5;
 
 const Shape shapeTypes[totalShapes] = {
     // T

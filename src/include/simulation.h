@@ -20,6 +20,7 @@ public:
     void Clear();
     void ResetVisited();
     int IndexAt(int x, int y);
+    int GetHighestPoint();
     bool ValidPosition(int x, int y);
 
     int width;

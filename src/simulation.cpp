@@ -65,6 +65,16 @@ int Simulation::IndexAt(int x, int y) {
     return y * width + x;
 }
 
+int Simulation::GetHighestPoint() {
+    for (int i = 0; i < width * height; i++) {
+        if (sandBuffer.get()[i].occupied) {
+            return i / width;
+        }
+    }
+
+    return height - 1;
+}
+
 bool Simulation::ValidPosition(int x, int y) {
     return (x >= 0 && x < width && y >= 0 and y < height);
 }

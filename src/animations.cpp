@@ -12,9 +12,6 @@ void ConnectionAnim::update(Game* game) {
 
     for (int i = positions.size() - 1; i > -1; i--) {
         Position pos = positions[i];
-        
-        if (pos.y < highestPoint)
-            highestPoint = pos.y;
 
         if (pos.x < x) {
             if (GetRandomValue(0, std::max(maxFallBackDistance - (x - pos.x), 0)) == 0) {
@@ -84,6 +81,15 @@ void FallingParticleAnim::update() {
             DrawRectangleRec({particle.pos.x, particle.pos.y, (float) particle.size, (float) particle.size}, particle.color);
         }
     }
+
+    // Remove a random amount of particles if there are too many
+    if (particles.size() > 2000) {
+        int removeAmount = GetRandomValue(10, 30);
+
+        while (--removeAmount) {
+            particles.erase(particles.begin() + GetRandomValue(0, particles.size() - 1));
+        }
+    }
 }
 
 void GameOverAnim::update(Game* game) {
@@ -107,5 +113,77 @@ void GameOverAnim::update(Game* game) {
             if (GetRandomValue(0, 3) != 0)
                 game->simulation.SetAt(x, y + yOffset, SandParticle{false});
         }
+    }
+}
+
+void LevelUpAnimation::update(Game* game) {
+    const int opacityDuration = 50;
+    const int fadeDelay = 5;
+    const int maxFallBackDistance = 16;
+
+    timer++;
+    tint = Color {0, 0, 0, (unsigned char) EaseCubicInOut(std::min(timer, opacityDuration), opacityDuration, 0, 150)};
+    int x = (timer - opacityDuration - fadeDelay) * 2;
+
+    bool isWhite = timer % 40 < 20;
+
+    for (int i = positions.size() - 1; i > -1; i--) {
+        Position pos = positions[i];
+        SandParticle* particle = game->simulation.GetAt(pos.x, pos.y);
+        if (!particle->occupied) continue;
+
+        DrawPixel(pos.x, pos.y, isWhite ? WHITE : particle->color);
+        
+        // Randomly Remove Pixel
+        if (pos.x < x) {
+            if (GetRandomValue(0, std::max(maxFallBackDistance - (x - pos.x), 0)) == 0) {
+                positions.erase(positions.begin() + i);
+                game->simulation.SetAt(pos.x, pos.y, SandParticle{false});
+            }
+        }
+    }
+
+    if (x > game->simulation.width + maxFallBackDistance) {
+        positions.clear();
+        finished = true;
+    }
+}
+
+void FadeInCenterText::update() {
+    // Increment the timer vairable
+    timer++;
+
+    // Calculate the animation alpha value
+    float alpha;
+    if (stayTime < 0 && timer > fadeInTime) {
+        alpha = 1;
+    } else {
+        alpha = std::min((float) timer/fadeInTime, 1.0f) - (float) std::max(timer - fadeInTime - stayTime, 0) / fadeOutTime;
+    }
+
+    // Calculate the width of th text
+    int width = 0;  
+    for (auto &str : texts) {
+        width += font->Measure(str) * size;
+    }
+
+    // Calculate the render position of the text
+    Vector2 pos = {
+        (screenWidth - width) / 2.0f,
+        screenHeight / 2 - font->height * size
+    };
+
+    // Update the alpha channel of the colors
+    std::vector<Color> alphaColors;
+    for (auto& color : colors) {
+        alphaColors.push_back(ColorAlpha(color, alpha));
+    }
+
+    // Render the text
+    font->RenderColored(texts, pos, size, alphaColors);
+
+    // End the animation
+    if (timer > fadeInTime + stayTime + fadeOutTime && stayTime >= 0) {
+        finished = true;
     }
 }

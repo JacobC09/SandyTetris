@@ -26,6 +26,7 @@ add_executable(game
     "src/game.cpp"
     "src/animations.cpp"
     "src/intro.cpp"
+    "src/ending.cpp"
 )
 
 add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)

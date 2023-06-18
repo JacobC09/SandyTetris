@@ -6,6 +6,7 @@
 
 class Game;
 class Intro;
+class Ending;
 
 const int screenWidth = 880;
 const int screenHeight = 640;
@@ -29,15 +30,19 @@ class Application {
 public:
     enum class States {
         Intro,
-        Game
+        Game,
+        Ending
     };
 
     struct Settings {
         bool music = true;
+        bool sfx = true;
     };
 
     Game* game;
     Intro* intro;
+    Ending* ending;
+    Music music;
     States state;
     Settings settings;
     PixelFont font;

@@ -9,15 +9,18 @@ struct Animation {
     bool finished = false;
 
     void reset() {timer = 0; finished = false; active = false;}
-    void start() {timer = 0; finished = false; active = true;}
+    void start() {reset(); active = true;}
     bool isFinished() {return finished;}
 };
 
 struct ConnectionAnim : Animation {
     std::vector<Position> positions;
-    int highestPoint;
 
     void update(Game* game);
+    void reset() {
+        Animation::reset();
+        positions.clear();
+    }
 };
 
 struct FallingParticle {
@@ -41,4 +44,28 @@ struct FallingParticleAnim : Animation {
 
 struct GameOverAnim : Animation {
     void update(Game* game);
+};
+
+struct LevelUpAnimation : Animation {
+    std::vector<Position> positions;
+    Color tint;
+
+    void update(Game* game);
+    void reset() {
+        Animation::reset();
+        tint = BLANK;
+        positions.clear();
+    }
+};
+
+struct FadeInCenterText : Animation {
+    PixelFont* font;
+    std::vector<std::string> texts;
+    std::vector<Color> colors;
+    float size;
+    int fadeInTime;
+    int stayTime;
+    int fadeOutTime;
+
+    void update();
 };

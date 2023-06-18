@@ -3,10 +3,11 @@
 #include "debug.h"
 #include "game.h"
 #include "intro.h"
+#include "ending.h"
 
 // Load the application
 void Application::Load() {
-    InitWindow(screenWidth, screenHeight, "Desert Tetris");
+    InitWindow(screenWidth, screenHeight, "Sandy Tetris");
     InitAudioDevice();
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     SetTargetFPS(60);
@@ -30,9 +31,16 @@ void Application::Load() {
 
     game = new Game(this);
     game->Load();
-
     intro = new Intro(this);
     intro->Load();
+    ending = new Ending(this);
+    ending->Load();
+
+    if (settings.music) {
+        music = LoadMusicStream("assets/music/Gerudo Valley 8 Bit.mp3");
+        PlayMusicStream(music);
+        SetMusicVolume(music, 0.5f);
+    }
 
     state = Application::States::Intro;
 }
@@ -40,8 +48,9 @@ void Application::Load() {
 // Run the application
 void Application::Run() {
     while (!WindowShouldClose()) {
-        if (!IsSoundPlaying(GetSound(Sounds::gerudoValley)) && settings.music)
-            PlaySound(GetSound(Sounds::gerudoValley));
+        if (settings.music) {
+            UpdateMusicStream(music);
+        }
 
         time += 1;
         float value[1] = {(float) time / 60};
@@ -55,6 +64,9 @@ void Application::Run() {
                 break;
             case Application::States::Game:
                 game->Update();
+                break;
+            case Application::States::Ending:
+                ending->Update();
                 break;
         }
         

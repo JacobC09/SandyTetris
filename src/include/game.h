@@ -3,6 +3,7 @@
 #include "shapes.h"
 #include "animations.h"
 #include "simulation.h"
+#include "levels.h"
 
 class Application;
 class Game;
@@ -22,7 +23,7 @@ void DrawBorder(Rectangle rect, int thickness, Color color);
 
 struct Statistics {
     int score;
-    int lines;
+    int clears;
 };
 
 struct Timer {
@@ -71,33 +72,40 @@ public:
     void FindConnectedSand();
     void UpdateConnectAnim();
     void UpdateGameOverAnim();
+    void UpdateLevelUpAnim();
     void UpdateTextParticles();
+    void SpawnBoardText(std::string largeString, Color largeColor, std::string smallString, Color smallColor);
+    void CalculateScore();
 
     bool IsShapeColliding();
     bool IsShapeInvalid();
-    ShapeData NewShape();
+    ShapeData GenShape();
 
+    Rectangle boardRect;
+    Rectangle nextShapeRect;
+    Rectangle infoPanelRect;
+    RenderTexture2D boardTex;
     Simulation simulation;
 
 private:
     int sinceSandUpdate;
     int bgAnimationTimer;
-    int gameStartDelay;
-    int gameCountDown;
+    int startDelay;
     int comboTimer;
     int comboCount;
+    int localScore;
+    int scoreIncrement;
+    int verticalShakeTimer;
+    int horizontalShakeTimer;
     bool gameOver = false;
     Timer bgAnimation;
-    RenderTexture2D boardTex;
     Image blocksImg;
-    Rectangle boardRect;
-    Rectangle nextShapeRect;
-    Rectangle infoPanelRect;
     Application* app;
 
     // Animations
     int gameOverTimer;
     ConnectionAnim connectionAnim;
+    LevelUpAnimation levelUpAnim;
     FallingParticleAnim gameOverParticleAnim;
     GameOverAnim gameOverAnim;
     std::vector<TextParticle> textParticles;
@@ -108,8 +116,7 @@ private:
     Vector2 cShapePos;
 
     // Stats
-    float shapeMoveSpeed;
-    float shapeFallSpeed;
-    int level;
+    int levelIndex;
+    Level level;
     Statistics stats;
 };

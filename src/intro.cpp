@@ -42,7 +42,6 @@ void Intro::Update() {
 
             float alpha = std::min((float) (timer - textFadeInDelay) / 90, 1.0f);
             DrawTexturePro(renderTexture.texture, source, dest, {0, 0}, 0, ColorAlpha(WHITE, alpha));
-            
 
             if (timer == textFadeInDelay + introTextDuration) {
                 SpawnParticles(dest, textSize);

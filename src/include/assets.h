@@ -18,11 +18,31 @@ inline std::map<Textures, const char*> texturePaths = {
 
 // Sounds
 enum class Sounds {
-    gerudoValley
+    block_fall,
+    block_rotate,
+    clear_1,
+    clear_2,
+    clear_3,
+    clear_4,
+    clear_5,
+    clear_6,
+    game_over_1,
+    game_over_2,
+    level_up
 };
 
 inline std::map<Sounds, const char*> soundPaths = {
-    {Sounds::gerudoValley, "assets/sound/Gerudo Valley 8 Bit.mp3"},
+    {Sounds::block_fall, "assets/sfx/block_fall.mp3"},
+    {Sounds::block_rotate, "assets/sfx/block_rotate.mp3"},
+    {Sounds::clear_1, "assets/sfx/clear_1.mp3"},
+    {Sounds::clear_2, "assets/sfx/clear_2.mp3"},
+    {Sounds::clear_3, "assets/sfx/clear_3.mp3"},
+    {Sounds::clear_4, "assets/sfx/clear_4.mp3"},
+    {Sounds::clear_5, "assets/sfx/clear_5.mp3"},
+    {Sounds::clear_6, "assets/sfx/clear_6.mp3"},
+    {Sounds::game_over_1, "assets/sfx/game_over_1.mp3"},
+    {Sounds::game_over_2, "assets/sfx/game_over_2.mp3"},
+    {Sounds::level_up, "assets/sfx/level_up.mp3"},
 };
 
 // Shaders

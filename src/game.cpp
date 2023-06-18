@@ -9,17 +9,23 @@ void Game::Load() {
     boardTex = LoadRenderTexture(simulation.width, simulation.height);
     bgAnimation = Timer {240};
     blocksImg = LoadImageFromTexture(GetTexture(Textures::blocks));
+    levelIndex = 0;
 }
 
 void Game::NewGame() {
     simulation.Clear();
     bgAnimation.reset();
+    levelUpAnim.reset();
+    connectionAnim.reset();
+    gameOverAnim.reset();
+    gameOverParticleAnim.reset();
     textParticles.clear();
     sinceSandUpdate = 0;
-    gameStartDelay = 20;
-    gameCountDown = 0;
+    startDelay = 90;
     comboTimer = 0;
     comboCount = 0;
+    verticalShakeTimer = 0;
+    horizontalShakeTimer = 0;
     
     // Game Over
     gameOverTimer = 0;
@@ -53,59 +59,67 @@ void Game::NewGame() {
     infoPanelRect.y = nextShapeRect.y + nextShapeRect.height + panelPadding;
 
     // Stats
-    shapeMoveSpeed = 2;
-    shapeFallSpeed = 1;
+    level = levels[levelIndex];
     stats = Statistics {
         .score = 0,
-        .lines = 0
+        .clears = 0
     };
 
-    level = 1;
+    localScore = stats.score;
 
     // Shape
-    nextShape = NewShape();
+    nextShape = GenShape();
     SpawnShape();
     nextShape = currentShape;
 }
 
 void Game::Update() {
-    const int totalCountDown = 3;
-    const int gameCountDownDuration = 51 * totalCountDown;
-    const Color countDownColors[totalCountDown] = {Colors::orange4, Colors::orange2, Colors::orange1};
-
     bool paused = false;
+    Vector2 screenShake = {0, 0};
 
     if (gameOver)
         paused = true;
+
+    if (verticalShakeTimer > 0) {
+        verticalShakeTimer--;
+        screenShake.y = GetRandomValue(-scale, scale);
+        boardRect.y -= screenShake.y;
+        nextShapeRect.y -= screenShake.y;
+        infoPanelRect.y -= screenShake.y;
+    }
+
+    if (horizontalShakeTimer > 0) {
+        horizontalShakeTimer--;
+        screenShake.x = GetRandomValue(-scale, scale);
+        boardRect.x -= screenShake.x;
+        nextShapeRect.x -= screenShake.x;
+        infoPanelRect.x -= screenShake.x;
+    }
     
-    if (gameStartDelay) {
-        gameStartDelay--;
-        paused = true;
-    } else if (gameCountDown < gameCountDownDuration) {
-        gameCountDown++;
+    if (startDelay) {
+        startDelay--;
         paused = true;
 
-        if (gameCountDown % (gameCountDownDuration / totalCountDown) == 1) {
-            int countDown = 3 - std::floor((float) gameCountDown/gameCountDownDuration * totalCountDown);
-
+        if (startDelay == 50) {
             textParticles.push_back(TextParticle {
-                .text = "Starting in " + std::to_string(countDown),
+                .text = "Level " + std::to_string(levelIndex + 1),
                 .startPos = {boardRect.x + boardRect.width / 2, boardRect.y + boardRect.height / 2 - 15},
                 .size = 3,
-                .color = countDownColors[std::max(std::min(countDown - 1, totalCountDown), 0)],
+                .color = Colors::orange2,
                 .fadeInTime = 30,
                 .fadeOutTime = 10,
-                .ascendDistance = 50,
+                .ascendDistance = 40,
                 .descendDistance = 5,
                 .startDelay = 0,
             });
         }
-
-        if (gameCountDown == gameCountDownDuration)
-            nextShape = NewShape();
+        
+        if (startDelay == 0)
+            nextShape = GenShape();
     }
 
-    if (!connectionAnim.active && !paused) {
+
+    if (!connectionAnim.active && !levelUpAnim.active && !paused) {
         if (++sinceSandUpdate > 1) {
             simulation.Step();
             sinceSandUpdate = 0;
@@ -134,9 +148,10 @@ void Game::Update() {
 
     BeginTextureMode(boardTex);
         ClearBackground(Colors::dim);
+
         DrawSandToTex();
 
-        if (currentShape.type != -1 && !paused)
+        if (currentShape.type != -1 && !levelUpAnim.active && !paused)
             DrawShape(currentShape, {std::floor(cShapePos.x), std::floor(cShapePos.y)}, 1);
         
         if (connectionAnim.active) {
@@ -147,10 +162,24 @@ void Game::Update() {
             UpdateGameOverAnim();
         }
 
+        if (levelUpAnim.active) {
+            UpdateLevelUpAnim();
+        }
+
     EndTextureMode();
-    DrawTexturePro(boardTex.texture, {0, 0, (float) boardTex.texture.width, (float) -boardTex.texture.height}, boardRect, {0, 0}, 0, WHITE);
+
+    Rectangle boardTexSource = {0, 0, (float) boardTex.texture.width, (float) -boardTex.texture.height};
+    DrawTexturePro(boardTex.texture, boardTexSource, boardRect, {0, 0}, 0, WHITE);
 
     UpdateTextParticles();
+    
+    // Add back the shake offset
+    boardRect.x += screenShake.x;
+    boardRect.y += screenShake.y;
+    nextShapeRect.x += screenShake.x;
+    nextShapeRect.y += screenShake.y;
+    infoPanelRect.x += screenShake.x;
+    infoPanelRect.y += screenShake.y;
 }
 
 void Game::DrawBg() {
@@ -208,11 +237,21 @@ void Game::DrawInfoPanel() {
     app->font.Render("Score: ", {infoPanelRect.x + panelMarginSide, y}, textSize, Colors::orange1);
     
     // Score Value
-    std::string scoreStr = std::to_string(stats.score);
+    std::string scoreStr = std::to_string(localScore);
     Vector2 scoreTextPos = {
         infoPanelRect.x + infoPanelRect.width - panelMarginSide - app->font.Measure(scoreStr) * textSize, 
         y
     };
+
+    if (localScore < stats.score) {
+        localScore += scoreIncrement;
+        if (std::abs(localScore - stats.score) < scoreIncrement) {
+            localScore = stats.score;
+        }
+        scoreTextPos.x -= GetRandomValue(-textSize, textSize);
+        scoreTextPos.y -= GetRandomValue(-textSize, textSize);
+    }
+
     app->font.Render(scoreStr, scoreTextPos, textSize, Colors::orange2);\
     y += app->font.height * 2 + panelMarginTop / 2; 
 
@@ -220,7 +259,7 @@ void Game::DrawInfoPanel() {
     app->font.Render("Lines: ", {infoPanelRect.x + panelMarginSide, y}, textSize, Colors::orange1);
         
     // Lines Value
-    std::string linesStr = std::to_string(stats.lines) + "/32";
+    std::string linesStr = std::to_string(stats.clears) + "/" + std::to_string(level.requiredClears);
     Vector2 linesTextPos = {
         infoPanelRect.x + infoPanelRect.width - panelMarginSide - app->font.Measure(linesStr) * textSize, 
         y
@@ -232,7 +271,7 @@ void Game::DrawInfoPanel() {
     app->font.Render("Level: ", {infoPanelRect.x + panelMarginSide, y}, textSize, Colors::orange1);
     
     // Level Value
-    std::string levelStr = std::to_string(level);
+    std::string levelStr = std::to_string(levelIndex + 1);
     Vector2 levelTextPos = {
         infoPanelRect.x + infoPanelRect.width - panelMarginSide - app->font.Measure(levelStr) * textSize, 
         y
@@ -245,7 +284,12 @@ void Game::DrawSandToTex() {
         for (int x = 0; x < simulation.width; x++) {
             SandParticle* particle = simulation.GetAt(x, y);
             if (!particle->occupied) continue;
-            DrawPixel(x, y, particle->color);
+
+            if (levelUpAnim.active) {
+                DrawPixel(x, y, ColorAlphaBlend(particle->color, levelUpAnim.tint, WHITE));
+            } else {
+                DrawPixel(x, y, particle->color);
+            }
         }
     }
 }
@@ -255,15 +299,15 @@ void Game::MoveShape() {
 
     bool down = IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN);
 
-    movement.y += down ? shapeFallSpeed * 2 : shapeFallSpeed;
+    movement.y += down ? level.fallSpeed * 2 : level.fallSpeed;
 
     bool right = IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT);
     bool left = IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT);
 
     if (right && !left) {
-        movement.x += shapeMoveSpeed;
+        movement.x += level.horizontalSpeed;
     } else if (left && !right) {
-        movement.x -= shapeMoveSpeed;
+        movement.x -= level.horizontalSpeed;
     }
 
     CheckShapeCollision(movement);
@@ -276,20 +320,30 @@ void Game::RotateShape() {
     int totalRotations = (signed) shapeTypes[currentShape.type].rotations.size();
     int oldRotation = currentShape.rotation;
 
+    bool rotated = true;
+
     if (up && !down) {
         if (++currentShape.rotation >= totalRotations)
             currentShape.rotation = 0;
+        
     } else if (up && !down) {
         if (--currentShape.rotation < 0)
             currentShape.rotation = totalRotations - 1;
+    } else {
+        rotated = false;
     }
 
     if (currentShape.rotation != oldRotation && !IsKeyDown(KEY_SPACE)) {
-        if (IsShapeColliding())
+        if (IsShapeColliding()) {
             currentShape.rotation = oldRotation;
-        else {
+            rotated = false;
+        } else {
             TryToCorrectShape();
         }
+    }
+
+    if (rotated) {
+        PlaySound(GetSound(Sounds::block_rotate));
     }
 }
 
@@ -318,7 +372,7 @@ void Game::TryToCorrectShape() {
 
 void Game::SpawnShape() {
     currentShape = nextShape;
-    nextShape = NewShape();
+    nextShape = GenShape();
     Rectangle shapeRect = GetShapeRect(currentShape);
     
     cShapePos = Vector2 {
@@ -406,6 +460,7 @@ void Game::CheckShapeCollision(Vector2 mouvement) {
 
     if (hitBottom) {
         TurnShapeToSand();
+        PlaySound(GetSound(Sounds::block_fall));
         currentShape.type = -1;
     }
 }
@@ -499,9 +554,31 @@ void Game::FindConnectedSand() {
         }
 
         if (connected) {
-            connectionAnim.start();
-            connectionAnim.positions = visited;
-            connectionAnim.highestPoint = simulation.height;
+            if (stats.clears + 1 == level.requiredClears) {
+                levelUpAnim.start();
+                levelUpAnim.positions = visited;
+                stats.clears++;
+                CalculateScore();
+                SpawnBoardText("Level Up!", Colors::orange2, "Yay", Colors::orange4);
+                PlaySound(GetSound(Sounds::level_up));
+            } else {
+                connectionAnim.start();
+                connectionAnim.positions = visited;
+
+                const int totalComboSounds = 6;
+                const Sounds comboSounds[totalComboSounds] = {
+                    Sounds::clear_1,
+                    Sounds::clear_2,
+                    Sounds::clear_3,
+                    Sounds::clear_4,
+                    Sounds::clear_5,
+                    Sounds::clear_6,
+                };
+
+                PlaySound(GetSound(comboSounds[std::min(comboCount, totalComboSounds - 1)]));
+            }
+            verticalShakeTimer = 10;
+            horizontalShakeTimer = 10;
         }
     }
 }
@@ -510,69 +587,35 @@ void Game::UpdateConnectAnim() {
     connectionAnim.update(this);
 
     if (connectionAnim.isFinished()) {
-        stats.lines++;
-        comboCount++;
+        int startScore = stats.score;
+        CalculateScore();
+
+        stats.clears++;
         comboTimer = 120;
+        comboCount++;
 
-        int score = std::pow(3, comboCount - 1) * 100;
-        int yStart = std::max(boardRect.y + connectionAnim.highestPoint * scale + 32, boardRect.y + 150);
-
-        stats.score += score;
-
-        const int maxComboNames = 5;
+        const int maxComboNames = 6;
         const std::string comboNames[maxComboNames] {
             "Congrats!",
             "Double Combo",
             "Triple Combo",
-            "Ultro Combo",
+            "Quadrouple Combo",
             "Omega Holy Combo",
-        };
-        const int maxComboColors = 3;
-        const Color comboColors[maxComboColors] {
-            Colors::orange2,
-            Colors::orange4,
-            Colors::orange4,
+            "Ultra Omega Jesus Combo"
         };
 
-        // Spawn Text Particles
-        textParticles.push_back(TextParticle {
-            .text = comboNames[std::min(comboCount, maxComboNames) - 1],
-            .startPos = {boardRect.x + boardRect.width / 2, (float) yStart},
-            .size = 2,
-            .color = comboColors[std::min(comboCount, maxComboColors) - 1],
-            .fadeInTime = 35,
-            .fadeOutTime = 10,
-            .ascendDistance = 100,
-            .descendDistance = 10,
-            .startDelay = 0,
-        });
-        textParticles.push_back(TextParticle {
-            .text = "+" + std::to_string(score),
-            .startPos = {boardRect.x + boardRect.width / 2, yStart + app->font.height * 2 + 6},
-            .size = 1.8,
-            .color = Colors::orange3,
-            .fadeInTime = 38,
-            .fadeOutTime = 7,
-            .ascendDistance = 100,
-            .descendDistance = 10,
-            .startDelay = 3,
-        });
+        std::string largeString = comboNames[std::min(comboCount, maxComboNames) - 1];
+        Color largeColor = comboCount == 1 ? Colors::orange2 : Colors::orange4;
+        std::string smallString = "+" + std::to_string(stats.score - startScore);
+        Color smallColor = Colors::orange3;
+
+        SpawnBoardText(largeString, largeColor, smallString, smallColor);
     }
 }
 
 void Game::UpdateGameOverAnim() {
     const int totalDuration = 240;
     const int startDelay = 20;
-
-    Transition* transition = app->GetTransition("game-over-arrow-reversed");
-    if (transition != nullptr) {
-        if (transition->isFinished()) {
-            gameOver = false;
-            gameOverParticleAnim.reset();
-            gameOverAnim.reset();
-        }
-        return;
-    }
 
     gameOverTimer++;
 
@@ -582,6 +625,7 @@ void Game::UpdateGameOverAnim() {
     if (!gameOverAnim.finished && gameOverTimer < totalDuration) {
         if (!gameOverAnim.active) {
             gameOverAnim.start();
+            PlaySound(GetSound(Sounds::game_over_1));
         }
 
         gameOverAnim.update(this);
@@ -598,6 +642,8 @@ void Game::UpdateGameOverAnim() {
         };
 
         gameOverParticleAnim.start();
+        PlaySound(GetSound(Sounds::game_over_2));
+
 
         // Add the existing particles to the animation
         for (int simY = 0; simY < simulation.height; simY++) {
@@ -627,9 +673,26 @@ void Game::UpdateGameOverAnim() {
         } else if (firstTransition->isFinished()) {
             app->AddTransition<ReverseArrowTransition>("game-over-arrow-reversed", Colors::orange0, 40, 260);
             NewGame();
-            gameOver = true;
-            gameOverParticleAnim.active = false;
-            gameOverParticleAnim.particles.clear();
+        }
+    }
+}
+
+void Game::UpdateLevelUpAnim() {
+    if (!levelUpAnim.finished) {
+        levelUpAnim.update(this);
+    } else {
+        Transition* transition = app->GetTransition("level-up-arrow");
+
+        if (transition == nullptr) {
+            app->AddTransition<ArrowTransition>("level-up-arrow", Colors::orange0, 40, 260);
+        } else if (transition->isFinished()) {
+            app->AddTransition<ReverseArrowTransition>("game-over-arrow", Colors::orange0, 40, 260);
+            if (levelIndex < maxLevels - 1) {
+                levelIndex++;
+                NewGame();
+            } else {
+                app->state = Application::States::Ending;
+            }
         }
     }
 }
@@ -661,6 +724,38 @@ void Game::UpdateTextParticles() {
             textParticles.erase(textParticles.begin() + i);
         }
     }
+}
+
+void Game::SpawnBoardText(std::string largeString, Color largeColor, std::string smallString, Color smallColor) {
+    int yStart = std::min(std::max(boardRect.y + simulation.GetHighestPoint() * scale - 16, boardRect.y + 150), boardRect.y + boardRect.height - 16);
+
+    textParticles.push_back(TextParticle {
+        .text = largeString,
+        .startPos = {boardRect.x + boardRect.width / 2, (float) yStart},
+        .size = 2,
+        .color = largeColor,
+        .fadeInTime = 35,
+        .fadeOutTime = 10,
+        .ascendDistance = 100,
+        .descendDistance = 10,
+        .startDelay = 0,
+    });
+    textParticles.push_back(TextParticle {
+        .text = smallString,
+        .startPos = {boardRect.x + boardRect.width / 2, yStart + app->font.height * 2 + 6},
+        .size = 1.8,
+        .color = smallColor,
+        .fadeInTime = 38,
+        .fadeOutTime = 7,
+        .ascendDistance = 100,
+        .descendDistance = 10,
+        .startDelay = 3,
+    });
+}
+
+void Game::CalculateScore() {
+    stats.score += std::pow(3, comboCount) * 100;
+    scoreIncrement = std::max((stats.score - localScore) / 100 * 3, 3);
 }
 
 bool Game::IsShapeColliding() {
@@ -697,12 +792,10 @@ bool Game::IsShapeInvalid() {
     return false;
 }
 
-// Utilities
-
-ShapeData Game::NewShape() {
+ShapeData Game::GenShape() {
     return ShapeData {
         .type = GetRandomValue(0, totalShapes - 1),
-        .color = GetRandomValue(0, totalColors - 1),
+        .color = GetRandomValue(0, level.maxColors - 1),
         .style = GetRandomValue(0, totalStyles - 1),
         .rotation = 0
     };
