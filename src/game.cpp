@@ -1,4 +1,5 @@
 #include <cmath>
+#include <string>
 #include "app.h"
 #include "game.h"
 #include "assets.h"
@@ -490,9 +491,9 @@ void Game::TurnShapeToSand() {
                 if (!simulation.ValidPosition(particlePos.x, particlePos.y)) continue;
 
                 simulation.SetAt(particlePos.x, particlePos.y, SandParticle {
-                    occupied: true,
-                    color: GetImageColor(blocksImg, src.x + x, src.y + y),
-                    type: currentShape.color
+                    .occupied = true,
+                    .color = GetImageColor(blocksImg, src.x + x, src.y + y),
+                    .type = currentShape.color
                 });
             }
         }

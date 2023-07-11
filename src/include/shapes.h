@@ -24,31 +24,31 @@ const int totalColors = 5;
 const Shape shapeTypes[totalShapes] = {
     // T
     Shape {
-        size: 3,
-        rotations: {
+        .size = 3,
+        .rotations = {
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 1, 0,
                     1, 1, 1,
                     0, 0, 0
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 1, 0,
                     0, 1, 1,
                     0, 1, 0
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 0, 0,
                     1, 1, 1,
                     0, 1, 0
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 1, 0,
                     1, 1, 0,
                     0, 1, 0
@@ -58,31 +58,31 @@ const Shape shapeTypes[totalShapes] = {
     },
     // J
     Shape {
-        size: 3,
-        rotations: {
+        .size = 3,
+        .rotations = {
             Rotation {
-                bitmap: {
+                .bitmap = {
                     1, 0, 0,
                     1, 1, 1,
                     0, 0, 0
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 1, 1,
                     0, 1, 0,
                     0, 1, 0
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 0, 0,
                     1, 1, 1,
                     0, 0, 1
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 1, 0,
                     0, 1, 0,
                     1, 1, 0
@@ -92,31 +92,31 @@ const Shape shapeTypes[totalShapes] = {
     },
     // L
     Shape {
-        size: 3,
-        rotations: {
+        .size = 3,
+        .rotations = {
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 0, 1,
                     1, 1, 1,
                     0, 0, 0
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 1, 0,
                     0, 1, 0,
                     0, 1, 1
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 0, 0,
                     1, 1, 1,
                     1, 0, 0
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     1, 1, 0,
                     0, 1, 0,
                     0, 1, 0
@@ -126,31 +126,31 @@ const Shape shapeTypes[totalShapes] = {
     },
     // S
     Shape {
-        size: 3,
-        rotations: {
+        .size = 3,
+        .rotations = {
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 1, 1,
                     1, 1, 0,
                     0, 0, 0
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 1, 0,
                     0, 1, 1,
                     0, 0, 1
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 0, 0,
                     0, 1, 1,
                     1, 1, 0
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     1, 0, 0,
                     1, 1, 0,
                     0, 1, 0
@@ -160,31 +160,31 @@ const Shape shapeTypes[totalShapes] = {
     },
     // Z
     Shape {
-        size: 3,
-        rotations: {
+        .size = 3,
+        .rotations = {
             Rotation {
-                bitmap: {
+                .bitmap = {
                     1, 1, 0,
                     0, 1, 1,
                     0, 0, 0
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 0, 1,
                     0, 1, 1,
                     0, 1, 0
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 0, 0,
                     1, 1, 0,
                     0, 1, 1
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 1, 0,
                     1, 1, 0,
                     1, 0, 0
@@ -194,10 +194,10 @@ const Shape shapeTypes[totalShapes] = {
     },
     // O
     Shape {
-        size: 2,
-        rotations: {
+        .size = 2,
+        .rotations = {
             Rotation {
-                bitmap: {
+                .bitmap = {
                     1, 1,
                     1, 1,
                 }
@@ -206,10 +206,10 @@ const Shape shapeTypes[totalShapes] = {
     },
     // I
     Shape {
-        size: 4,
-        rotations: {
+        .size = 4,
+        .rotations = {
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 0, 0, 0,
                     1, 1, 1, 1,
                     0, 0, 0, 0,
@@ -217,7 +217,7 @@ const Shape shapeTypes[totalShapes] = {
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 0, 1, 0,
                     0, 0, 1, 0,
                     0, 0, 1, 0,
@@ -225,7 +225,7 @@ const Shape shapeTypes[totalShapes] = {
                 },
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 0, 0, 0,
                     0, 0, 0, 0,
                     1, 1, 1, 1,
@@ -233,7 +233,7 @@ const Shape shapeTypes[totalShapes] = {
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 1, 0, 0,
                     0, 1, 0, 0,
                     0, 1, 0, 0,
@@ -244,31 +244,31 @@ const Shape shapeTypes[totalShapes] = {
     },
     // Jake
     Shape {
-        size: 3,
-        rotations: {
+        .size = 3,
+        .rotations = {
             Rotation {
-                bitmap: {
+                .bitmap = {
                     1, 1, 1,
                     0, 1, 0,
                     1, 1, 0,
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     1, 0, 1,
                     1, 1, 1,
                     0, 0, 1,
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     0, 1, 1,
                     0, 1, 0,
                     1, 1, 1,
                 }
             },
             Rotation {
-                bitmap: {
+                .bitmap = {
                     1, 0, 0,
                     1, 1, 1,
                     1, 0, 1,

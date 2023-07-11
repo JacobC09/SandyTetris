@@ -34,7 +34,12 @@ add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
 target_include_directories(game PRIVATE "src/include")
 target_precompile_headers(game PUBLIC "src/include/common.h")
 target_link_libraries(game PRIVATE raylib)
-target_compile_options(game PRIVATE -Wall -std=c++17 -Wno-reorder)
+
+if (MSVC)
+    target_compile_options(game PRIVATE /std:c++20)
+else()
+    target_compile_options(game PRIVATE -Wall -std=c++20 -Wno-reorder)
+endif()
 
 # == Copy Assets == #
 
